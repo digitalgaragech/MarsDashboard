@@ -18,7 +18,7 @@ const render = async (root, state) => {
 
 
 // create content
-const App = (state) => {
+const App = (state) => { 
     let { rovers, apod } = state
 
     return `
