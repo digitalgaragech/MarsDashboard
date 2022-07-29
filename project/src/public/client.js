@@ -12,47 +12,54 @@ const root = document.getElementById('root')
 
 const updateStore = (store, newState) => {
     store = Object.assign(store, newState)
+
     render(root, store)
 }
 
 const render = async (root, state) => {
-    root.innerHTML = App(state)
+
+    const currentRover = state.get('currentRover');
+    root.innerHTML = App(state,currentRover);
+
+
+    if(currentRover.latest_photos){
+        const roverArrows = document.querySelectorAll('.slide-arrow');
+        roverArrows.forEach(function(roverArrow) {
+            roverArrow.style.display = 'block'
+        });
+    }
 }
 
 
 // create content
-const App = (state) => { 
-    let { rovers, apod } = state
+const App = (state,currentRover) => { 
 
     return `
-        <main>
-            <section>
-                <!-- rover tabs -->
-                <div class="rover_tabs">
-                    <p>Choose a Rover to display its beautiful photos</p>
-                    <ul>${createRoverTabs(store)}</ul>  
-                </div>
-                <!-- rover infos -->
-                <div class="rover_datas">${roverDatas(state)}</div>
-                <!-- rover images -->                
-                <div class="rover_images">  
-                    <button class="slide-arrow" id="slide-arrow-prev" onclick="changeSlide(event)">
-                        &#8249;
-                    </button>
-                    <button class="slide-arrow" id="slide-arrow-next"  onclick="changeSlide(event)">
-                        &#8250;
-                    </button>
-                    <ul id="slides">${roverImages(state)}</ul>
-                </div>
-            </section>
-        </main>
-    `
+        <!-- rover tabs -->
+        <div class="rover_tabs">
+            <p>Choose a Rover to display its beautiful photos</p>
+            <ul>${createRoverTabs(state)}</ul>  
+        </div>
+        <!-- rover infos -->
+        <div class="rover_datas">${roverDatas(currentRover)}</div>
+        <!-- rover images -->   
+        <div class="rover_images_container">  
+            <button class="slide-arrow" id="slide-arrow-prev" onclick="changeSlide(event)">
+                &#8249;
+            </button>
+            <button class="slide-arrow" id="slide-arrow-next"  onclick="changeSlide(event)">
+                &#8250;
+            </button>             
+            <div class="rover_images">  
+                <ul id="slides">${roverImages(currentRover)}</ul>
+            </div>
+        </div>
+`
 }
 
 // listening for load event
 window.addEventListener('load', () => {
     render(root, store)
-
 })
 
 // ----- COMPONENTS ----- //
@@ -60,28 +67,24 @@ window.addEventListener('load', () => {
 // create list with rovers
 
 const createRoverTabs = (state) => {
-    return state.get('rovers').map(rover => '<li id='+rover+' onclick="selectedRover(event)">'+rover+'</li>').join('');
+    return state.get('rovers').map(rover => `<li id=${rover} onclick="selectedRover(event)">${rover}</li>`).join('');
 }
-// manage tab state
-
 
 // Get rover datas
-const roverDatas = (state) => {
-    const currentRover = state.get('currentRover');
+const roverDatas = (currentRover) => {
     if(currentRover){ 
         return `
-        <p>Rover: ${currentRover.latest_photos[0].rover.name}</p>
-        <p>State: ${currentRover.latest_photos[0].rover.status}</p>
-        <p>Launch date: ${currentRover.latest_photos[0].rover.launch_date}</p>
-        <p>Landing date: ${currentRover.latest_photos[0].rover.landing_date}</p>
+        <p>Rover: <b>${currentRover.latest_photos[0].rover.name}</b></p>
+        <p>State: <b>${currentRover.latest_photos[0].rover.status}</b></p>
+        <p>Launch date: <b>${currentRover.latest_photos[0].rover.launch_date}</b></p>
+        <p>Landing date: <b>${currentRover.latest_photos[0].rover.landing_date}</b></p>
         `
     } else {
         return 'Please select a Rover'
     }
 }   
 // Get rover images
-const roverImages = (state) => {
-    const currentRover = state.get('currentRover');
+const roverImages = (currentRover) => {
     if(currentRover){
         return currentRover.latest_photos.map( r => 
             `<li><img src="${r.img_src}" /></li>`
@@ -143,7 +146,18 @@ document.addEventListener('pointermove', (event) => {
 // ----- EVENTS ----- //
 
 // tabs click event
-const selectedRover = event =>{
+const activeTab = (thisRover) => {
+    const roverTabs = document.querySelector('.rover_tabs')
+    const tabsId = roverTabs.querySelectorAll('li');
+    tabsId.forEach(function(tab) {
+        if(tab.id == thisRover) {
+            console.log(tab.id);
+            document.getElementById(tab.id).classList.add('active');
+        }
+    });
+}
+
+const selectedRover = (event) =>{
     slideScroll = 0;
     currentSlide = 0;
     getRoverData(event.target.id) 
@@ -159,6 +173,7 @@ const getRoverData = async (roverName) => {
     currentRover = await response.json() 
     const newState = store.set('currentRover', currentRover)
     updateStore(store, newState)
+    activeTab(roverName) 
     return currentRover
 }
 
