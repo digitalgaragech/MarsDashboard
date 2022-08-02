@@ -1,7 +1,4 @@
-
-
 let store = Immutable.Map({
-    user: Immutable.Map({ name: 'Student' }),
     apod: '',
     rovers: Immutable.List(['curiosity', 'opportunity', 'spirit']),
     currentRover: ''
@@ -112,12 +109,12 @@ const slideThis = (direction) => {
     if(direction == "slide-arrow-next"){
         if(currentSlide<maxSlides){
              currentSlide++;
-             slideScroll += slideWidth[currentSlide];
+             slideScroll += slideWidth[currentSlide]+10; // add image padding 
         }
     } else {
         if(currentSlide>0){
             currentSlide--;
-            slideScroll -= slideWidth[currentSlide];
+            slideScroll -= slideWidth[currentSlide]-10; // add image padding
         }
     }
     slidesContainer.style.transform = `translate(-${slideScroll}px)`   
